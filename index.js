@@ -11,6 +11,10 @@ const netflix = require('./routes/netflix.js');
 const amazon = require('./routes/amazon.js');
 const youtube = require('./routes/youtube.js');
 
+app.get('/', (req, res) => {
+    res.json('Use Routes: /netflix, /youtube, /amazon');
+});
+
 app.use(netflix);
 app.use(amazon);
 app.use(youtube);

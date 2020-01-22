@@ -34,7 +34,7 @@ router.get('/amazon', (req, res) => {
                 console.log(err);
             });
         }
-    })
+    });
     console.log('sent data from endpoint /amazon');
 });
 

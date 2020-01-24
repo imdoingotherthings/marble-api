@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const fetch = require('node-fetch');
-const rtg   = require("url").parse(process.env.REDISTOGO_URL);
+// const rtg   = require("url").parse(process.env.REDISTOGO_URL);
 const redis = require('redis');
-// const client = redis.createClient(); // use in dev mode
-const client = redis.createClient(rtg.port, rtg.hostname);
-client.auth(rtg.auth.split(":")[1]);
+const client = redis.createClient(); // use in dev mode
+// const client = redis.createClient(rtg.port, rtg.hostname);
+// client.auth(rtg.auth.split(":")[1]);
 const puppet = require('puppeteer');
 
 client.on('error', function(err) {
@@ -89,7 +89,7 @@ router.get('/youtube', (req, res) => {
             getYoutube()
             .then(data => {
                 console.log('not cached... now calling api...');
-                client.setex(RedisKey, 30, JSON.stringify(data));
+                client.setex(RedisKey, 3600, JSON.stringify(data));
                 return res.json({ source: 'api', data: data });
             })
             .catch(err => {

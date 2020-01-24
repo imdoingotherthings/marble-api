@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const fetch = require('node-fetch');
-const rtg   = require("url").parse(process.env.REDISTOGO_URL);
+// const rtg   = require("url").parse(process.env.REDISTOGO_URL);
 const redis = require('redis');
-const client = redis.createClient(rtg.port, rtg.hostname);
-client.auth(rtg.auth.split(":")[1]);
+const client = redis.createClient();
+// const client = redis.createClient(rtg.port, rtg.hostname);
+// client.auth(rtg.auth.split(":")[1]);
 
 client.on('error', function(err) {
     console.log(`Redis error: ${err}`);

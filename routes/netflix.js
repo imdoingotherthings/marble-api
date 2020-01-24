@@ -33,7 +33,7 @@ router.get('/netflix', (req, res) => {
             getNetflix()
             .then(data => {
                 console.log('not cached... now calling api...');
-                client.setex(RedisKey, 3600, JSON.stringify(data));
+                client.setex(RedisKey, 5, JSON.stringify(data));
                 return res.json({ source: 'api', data: data });
             })
             .catch(err => {

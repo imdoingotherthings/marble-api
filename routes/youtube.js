@@ -7,7 +7,6 @@ const client = redis.createClient();
 // const client = redis.createClient(rtg.port, rtg.hostname);
 // client.auth(rtg.auth.split(":")[1]);
 const puppet = require('puppeteer');
-let $ = require("jquery");
 
 client.on('error', function(err) {
     console.log(`Redis error: ${err}`);

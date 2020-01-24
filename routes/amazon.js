@@ -6,13 +6,14 @@ const redis = require('redis');
 const client = redis.createClient();
 // const client = redis.createClient(rtg.port, rtg.hostname);
 // client.auth(rtg.auth.split(":")[1]);
+const puppet = require('puppeteer');
 
 client.on('error', function(err) {
     console.log(`Redis error: ${err}`);
 });
 
 async function getAmazon () {
-    const response = await fetch("https://utelly-tv-shows-and-movies-availability-v1.p.rapidapi.com/lookup?term=jack%ryan", {
+    const response = await fetch("https://utelly-tv-shows-and-movies-availability-v1.p.rapidapi.com/lookup?term=jack%ryan&country=us", {
         "method": "GET",
         "headers": {
             "x-rapidapi-host": "utelly-tv-shows-and-movies-availability-v1.p.rapidapi.com",
@@ -20,7 +21,36 @@ async function getAmazon () {
         }
     })
     const data = await response.json();
-    return data;
+    let url = (data['results'][0]['locations'][0]['url']);
+    const browser = await puppet.launch({
+        headless: true,
+        args: [
+            '--no-sandbox', 
+            "--proxy-server='direct://'",
+            '--proxy-bypass-list=*',
+            '--disable-setuid-sandbox',
+            '--ignore-certificate-errors'
+        ]
+    });
+    const page = await browser.newPage();
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36');
+    await page.goto(url);
+    let api_data = await page.evaluate(() => {
+        let api = {};
+        let desc = document.getElementsByClassName('_1npiSz')[0].innerText;  
+        let outer = document.querySelector('span[class=_23t6YR]');
+        let inner = outer.querySelector('a').getAttribute('aria-label');
+        let imdbOut = document.getElementsByClassName('_23t6YR AtzNiv');
+        let imdbIn = imdbOut[0].querySelector('span[data-automation-id=imdb-rating-badge]').getAttribute('aria-label');
+        let year = document.querySelector('span[data-automation-id=release-year-badge]').innerText;
+        api.description = desc;
+        api.rating = inner;
+        api.imdbRating = imdbIn;
+        api.year = year;
+        return api;
+    });
+    await browser.close();
+    return [data, api_data];
 }
 
 router.get('/amazon', (req, res) => {
@@ -34,7 +64,7 @@ router.get('/amazon', (req, res) => {
             getAmazon()
             .then(data => {
                 console.log('not cached... now calling api...');
-                client.setex(RedisKey, 3600, JSON.stringify(data));
+                client.setex(RedisKey, 5, JSON.stringify(data));
                 return res.json({ source: 'api', data: data });
             })
             .catch(err => {

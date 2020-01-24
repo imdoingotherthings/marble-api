@@ -12,7 +12,10 @@ client.on('error', function(err) {
 });
 
 async function getNetflix () {
-    const response = await fetch("https://utelly-tv-shows-and-movies-availability-v1.p.rapidapi.com/lookup?term=mad%20men", {
+    const mainUrl = "https://utelly-tv-shows-and-movies-availability-v1.p.rapidapi.com/lookup?term=mad%20men";
+    const newUrl = new URL(mainUrl);
+    const term = newUrl.searchParams.get("term");
+    const response = await fetch(mainUrl, {
         "method": "GET",
         "headers": {
             "x-rapidapi-host": "utelly-tv-shows-and-movies-availability-v1.p.rapidapi.com",
@@ -48,8 +51,21 @@ async function getNetflix () {
         api.year = year;
         return api;
     });
+    const page2 = await browser.newPage();
+    await page2.goto('https://www.google.com/');
+    await page2.waitForSelector('input[type=text]');
+    await page2.type('input[type=text]', `${term} trailer`);
+    await page2.waitForSelector('input[type=submit]');
+    await page2.keyboard.press('Enter');
+    await page2.waitForSelector('div[class=twQ0Be]');
+    let trailer_api = await page2.evaluate(() => {
+        let api = {};
+        let video = document.querySelector('div[class=twQ0Be]').querySelector('a').href;
+        api.video = video;
+        return api;
+    });
     await browser.close();
-    return [data, api_data];
+    return [data, api_data, trailer_api];
 }
 
 router.get('/netflix', (req, res) => {
